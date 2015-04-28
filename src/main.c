@@ -9,7 +9,7 @@ const int SCR_WIDTH  = 640;
 const int SCR_HEIGHT = 480;
 const int rows       = 4;
 const int cols       = 4;
-bool randomized      = false;
+bool shuffled        = false;
 
 SDL_Window  *window  = NULL;
 SDL_Surface *surface = NULL;
@@ -62,7 +62,6 @@ SDL_Surface *load_surface (char *path) {
 }
 
 bool load_media(void) {
-    //TODO: accept command line argument for image
     image = load_surface("faggot.png");
     if (image == NULL) {
         printf("Failed to load PNG image!\n");
@@ -93,8 +92,10 @@ void apply_surface (int x, int y, SDL_Surface* source, SDL_Surface* destination,
 void clean_up(void) {
     SDL_FreeSurface(image);
     SDL_DestroyWindow(window);
+
     image  = NULL;
     window = NULL;
+
     IMG_Quit();
     SDL_Quit();
 }
@@ -104,8 +105,7 @@ void update_window (int invis[2], int init) {
     for (int i=0; i<rows; i++) {
         for (int j=0; j<cols; j++) {
             if (init && invis[0] == i && invis[1] == j) continue;
-            apply_surface(j * sliding_puzzle[i][j].w + j, i * sliding_puzzle[i][j].h + i, 
-                          image, surface, &sliding_puzzle[i][j]);
+            apply_surface(j * sliding_puzzle[i][j].w + j, i * sliding_puzzle[i][j].h + i, image, surface, &sliding_puzzle[i][j]);
         }
     }
     surface = SDL_GetWindowSurface(window);
@@ -115,10 +115,8 @@ void update_window (int invis[2], int init) {
 void set_clicked_index (int clicked_x, int clicked_y, int *idx_i, int *idx_j, int invis[2]) {
     for (int i=0; i<rows; i++) {
         for (int j=0; j<cols; j++) {
-            if (clicked_x >= j * sliding_puzzle[i][j].w + j 
-            && clicked_x <= j * sliding_puzzle[i][j].w + sliding_puzzle[i][j].w
-            && clicked_y >= i * sliding_puzzle[i][j].h
-            && clicked_y <= i * sliding_puzzle[i][j].h + i + sliding_puzzle[i][j].h) {
+            if (clicked_x >= j * sliding_puzzle[i][j].w + j && clicked_x <= j * sliding_puzzle[i][j].w + sliding_puzzle[i][j].w
+            && clicked_y >= i * sliding_puzzle[i][j].h && clicked_y <= i * sliding_puzzle[i][j].h + i + sliding_puzzle[i][j].h) {
                 if (i == invis[0] && j == invis[1]) continue;
                 *idx_i = i;
                 *idx_j = j;
@@ -136,13 +134,16 @@ void swap_tile (int i, int j, int *invis) {
 }
 
 void shuffle_tiles(void) {
-    int swap_x1 = rand()%4;
-    int swap_y1 = rand()%4;
-    int swap_x2 = rand()%4;
-    int swap_y2 = rand()%4;
-    SDL_Rect temp = sliding_puzzle[swap_x1][swap_y1];
-    sliding_puzzle[swap_x1][swap_y1] = sliding_puzzle[swap_x2][swap_y2];
-    sliding_puzzle[swap_x2][swap_y2] = temp;
+    for (int i=0; i<100; i++) {
+        int swap_x1 = rand()%4;
+        int swap_y1 = rand()%4;
+        int swap_x2 = rand()%4;
+        int swap_y2 = rand()%4;
+        SDL_Rect temp = sliding_puzzle[swap_x1][swap_y1];
+        sliding_puzzle[swap_x1][swap_y1] = sliding_puzzle[swap_x2][swap_y2];
+       sliding_puzzle[swap_x2][swap_y2] = temp;
+    }
+    shuffled = true;
 }
 
 int main (int argc, char **argv) {
@@ -159,9 +160,6 @@ int main (int argc, char **argv) {
         } else {
             bool quit = false;
             SDL_Event e;
-            for (int i=0; i<100; i++) {
-                shuffle_tiles();
-            }
             update_window(NULL,0);
             while (!quit) {
                 while (SDL_PollEvent(&e) != 0) {
@@ -170,6 +168,7 @@ int main (int argc, char **argv) {
                            quit = true;
                            break;
                        case SDL_MOUSEBUTTONDOWN:
+                           if (!shuffled) shuffle_tiles();
                            set_clicked_index(e.button.x, e.button.y, &idxi, &idxj, invis);
                            if      (idxi-1 == invis[0] && idxj == invis[1]) swap_tile(idxi, idxj, invis);
                            else if (idxi+1 == invis[0] && idxj == invis[1]) swap_tile(idxi, idxj, invis);
