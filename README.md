@@ -1,2 +1,2 @@
 # SlidingPuzzle
-A sliding puzzle challenge I've been working to complete
+Slide the image blocks to form the original picture.
