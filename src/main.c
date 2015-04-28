@@ -62,6 +62,7 @@ SDL_Surface *load_surface (char *path) {
 }
 
 bool load_media(void) {
+    //TODO: accept command line argument for image
     image = load_surface("faggot.png");
     if (image == NULL) {
         printf("Failed to load PNG image!\n");
@@ -92,10 +93,8 @@ void apply_surface (int x, int y, SDL_Surface* source, SDL_Surface* destination,
 void clean_up(void) {
     SDL_FreeSurface(image);
     SDL_DestroyWindow(window);
-
     image  = NULL;
     window = NULL;
-
     IMG_Quit();
     SDL_Quit();
 }
@@ -105,7 +104,8 @@ void update_window (int invis[2], int init) {
     for (int i=0; i<rows; i++) {
         for (int j=0; j<cols; j++) {
             if (init && invis[0] == i && invis[1] == j) continue;
-            apply_surface(j * sliding_puzzle[i][j].w + j, i * sliding_puzzle[i][j].h + i, image, surface, &sliding_puzzle[i][j]);
+            apply_surface(j * sliding_puzzle[i][j].w + j, i * sliding_puzzle[i][j].h + i, 
+                          image, surface, &sliding_puzzle[i][j]);
         }
     }
     surface = SDL_GetWindowSurface(window);
@@ -115,8 +115,10 @@ void update_window (int invis[2], int init) {
 void set_clicked_index (int clicked_x, int clicked_y, int *idx_i, int *idx_j, int invis[2]) {
     for (int i=0; i<rows; i++) {
         for (int j=0; j<cols; j++) {
-            if (clicked_x >= j * sliding_puzzle[i][j].w + j && clicked_x <= j * sliding_puzzle[i][j].w + sliding_puzzle[i][j].w
-            && clicked_y >= i * sliding_puzzle[i][j].h && clicked_y <= i * sliding_puzzle[i][j].h + i + sliding_puzzle[i][j].h) {
+            if (clicked_x >= j * sliding_puzzle[i][j].w + j 
+            && clicked_x <= j * sliding_puzzle[i][j].w + sliding_puzzle[i][j].w
+            && clicked_y >= i * sliding_puzzle[i][j].h
+            && clicked_y <= i * sliding_puzzle[i][j].h + i + sliding_puzzle[i][j].h) {
                 if (i == invis[0] && j == invis[1]) continue;
                 *idx_i = i;
                 *idx_j = j;
