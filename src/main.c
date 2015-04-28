@@ -7,14 +7,14 @@
 
 const int SCR_WIDTH  = 640;
 const int SCR_HEIGHT = 480;
-const int rows       = 4;
-const int cols       = 4;
+int rows       = 4;
+int cols       = 4;
 bool shuffled        = false;
 
 SDL_Window  *window  = NULL;
 SDL_Surface *surface = NULL;
 SDL_Surface *image   = NULL;
-SDL_Rect sliding_puzzle[4][4];
+SDL_Rect sliding_puzzle[32][32];
 
 void apply_surface(int, int, SDL_Surface *, SDL_Surface *, SDL_Rect *);
 void update_window(int[], int);
@@ -115,8 +115,8 @@ void update_window (int invis[2], int init) {
 void set_clicked_index (int clicked_x, int clicked_y, int *idx_i, int *idx_j, int invis[2]) {
     for (int i=0; i<rows; i++) {
         for (int j=0; j<cols; j++) {
-            if (clicked_x >= j * sliding_puzzle[i][j].w + j && clicked_x <= j * sliding_puzzle[i][j].w + sliding_puzzle[i][j].w
-            && clicked_y >= i * sliding_puzzle[i][j].h && clicked_y <= i * sliding_puzzle[i][j].h + i + sliding_puzzle[i][j].h) {
+            if (clicked_x >= j * sliding_puzzle[i][j].w + j && clicked_x <= j * sliding_puzzle[i][j].w + j + sliding_puzzle[i][j].w
+            && clicked_y >= i * sliding_puzzle[i][j].h + i && clicked_y <= i * sliding_puzzle[i][j].h + i + sliding_puzzle[i][j].h) {
                 if (i == invis[0] && j == invis[1]) continue;
                 *idx_i = i;
                 *idx_j = j;
@@ -134,11 +134,11 @@ void swap_tile (int i, int j, int *invis) {
 }
 
 void shuffle_tiles(void) {
-    for (int i=0; i<100; i++) {
-        int swap_x1 = rand()%4;
-        int swap_y1 = rand()%4;
-        int swap_x2 = rand()%4;
-        int swap_y2 = rand()%4;
+    for (int i=0; i<1000; i++) {
+        int swap_x1 = rand()%rows;
+        int swap_y1 = rand()%rows;
+        int swap_x2 = rand()%rows;
+        int swap_y2 = rand()%rows;
         SDL_Rect temp = sliding_puzzle[swap_x1][swap_y1];
         sliding_puzzle[swap_x1][swap_y1] = sliding_puzzle[swap_x2][swap_y2];
        sliding_puzzle[swap_x2][swap_y2] = temp;
@@ -148,10 +148,34 @@ void shuffle_tiles(void) {
 
 int main (int argc, char **argv) {
     if (argc < 2) {
-        printf("Specify a .png file\nex: %s dog.png\n", argv[0]);
+        printf("You must specify a .png file\nex: %s dog.png\n", argv[0]);
+        printf("You may also specify a difficulty: %s dog.png easy\n", argv[0]);
+        printf("Valid difficulties: easy, medium, hard, extreme, NOPE\n");
         return 1;
     }
 
+    if (argc == 3) {
+        if (strcmp(argv[2], "easy") == 0) {
+            rows = 4;
+            cols = 4;
+        } else if (strcmp(argv[2], "medium") == 0) {
+            rows = 6;
+            cols = 6;
+        } else if (strcmp(argv[2], "hard") == 0) {
+            rows = 8;
+            cols = 8;
+        } else if (strcmp(argv[2], "extreme") == 0) {
+            rows = 16;
+            rows = 16;
+        } else if (strcmp(argv[2], "NOPE") == 0) { 
+            rows = 32;
+            cols = 32;
+        } else { 
+            printf("Invalid difficulty\n");
+            return 1;
+        }
+    }
+    
     srand(time(NULL));
     int idxi, idxj;
     int invis[2] = {rand() % rows, rand() % cols};
