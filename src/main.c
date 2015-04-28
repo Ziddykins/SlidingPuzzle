@@ -61,8 +61,8 @@ SDL_Surface *load_surface (char *path) {
     return optimized_surface;
 }
 
-bool load_media(void) {
-    image = load_surface("faggot.png");
+bool load_media(char *argv) {
+    image = load_surface(argv);
     if (image == NULL) {
         printf("Failed to load PNG image!\n");
         return false;
@@ -147,6 +147,11 @@ void shuffle_tiles(void) {
 }
 
 int main (int argc, char **argv) {
+    if (argc < 2) {
+        printf("Specify a .png file\nex: %s dog.png\n", argv[0]);
+        return 1;
+    }
+
     srand(time(NULL));
     int idxi, idxj;
     int invis[2] = {rand() % rows, rand() % cols};
@@ -154,7 +159,7 @@ int main (int argc, char **argv) {
         printf("Could not initialize SDL: %s\n", SDL_GetError());
         return 1;
     } else {
-        if (!load_media()) {
+        if (!load_media(argv[1])) {
             printf("Failed to load media\n");
             return 1;
         } else {
