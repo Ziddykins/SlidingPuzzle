@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -18,7 +19,7 @@ SDL_Rect sliding_puzzle[32][32];
 
 void update_window(int[], int);
 
-bool init (void) {
+bool init(void) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("Couldn't initialize SDL: %s\n", SDL_GetError());
         return false;
@@ -58,7 +59,7 @@ SDL_Surface *load_surface (char *path) {
     return optimized_surface;
 }
 
-bool load_media (char *argv) {
+bool load_media(char *argv) {
     image = load_surface(argv);
     if (image == NULL) {
         printf("Failed to load PNG image!\n");
@@ -66,7 +67,6 @@ bool load_media (char *argv) {
     }
     int cnk_w = image->w / cols;
     int cnk_h = image->h / rows;
-    
     SDL_SetWindowSize(window, image->w, image->h);
     for (int i=0; i<rows; i++) {
         for (int j=0; j<cols; j++) {
@@ -87,7 +87,7 @@ void apply_surface (int x, int y, SDL_Surface* source, SDL_Surface* destination,
     SDL_BlitSurface(source, sliding_puzzle, destination, &offset);
 }
 
-void clean_up (void) {
+void clean_up(void) {
     SDL_FreeSurface(image);
     SDL_DestroyWindow(window);
     image  = NULL;
@@ -96,7 +96,7 @@ void clean_up (void) {
     SDL_Quit();
 }
 
-void update_window (int invis[2], int init) {
+void update_window (int invis[], int init) {
     SDL_FillRect(surface, NULL, 0x000000);
     for (int i=0; i<rows; i++) {
         for (int j=0; j<cols; j++) {
@@ -109,7 +109,7 @@ void update_window (int invis[2], int init) {
     SDL_UpdateWindowSurface(window);
 }
 
-void set_clicked_index (int clicked_x, int clicked_y, int *idx_i, int *idx_j, int invis[2]) {
+void set_clicked_index (int clicked_x, int clicked_y, int *idx_i, int *idx_j, int invis[]) {
     for (int i=0; i<rows; i++) {
         for (int j=0; j<cols; j++) {
             if (clicked_x >= j * sliding_puzzle[i][j].w + j
@@ -124,26 +124,37 @@ void set_clicked_index (int clicked_x, int clicked_y, int *idx_i, int *idx_j, in
     }
 }
 
-void swap_tile (int i, int j, int *invis, int order[][cols]) {
+void swap_tile (int i, int j, int invis[], int order[][cols]) {
     int arr_tmp = order[i][j];
-    
-    order[i][j] = order[*(invis)][*(invis+1)];
-    order[*(invis)][*(invis+1)] = arr_tmp;
+    int invx = invis[0];
+    int invy = invis[1];
+    order[i][j] = order[invx][invy];
+    order[invx][invy] = arr_tmp;
     SDL_Rect temp = sliding_puzzle[i][j];
-    sliding_puzzle[i][j] = sliding_puzzle[*(invis)][*(invis+1)];
-    sliding_puzzle[*(invis)][*(invis+1)] = temp;
-    *(invis) = i;
-    *(invis + 1) = j;
+    sliding_puzzle[i][j] = sliding_puzzle[invx][invy];
+    sliding_puzzle[invx][invy] = temp;
+    invis[0] = i;
+    invis[1] = j;
 }
 
 void shuffle_tiles (int order[][cols], int invis[]) {
-    for (int i=0; i<1000; i++) {
+    int invx = invis[0];
+    int invy = invis[1];
+
+    for (int i=0; i<50; i++) {
         int swap_x1 = rand()%rows;
-        int swap_y1 = rand()%rows;
+        int swap_y1 = rand()%cols;
         int swap_x2 = rand()%rows;
-        int swap_y2 = rand()%rows;
+        int swap_y2 = rand()%cols;
         int arr_tmp = order[swap_x1][swap_y1];
-        
+
+        if (swap_x1 == invx && swap_y1 == invy) {
+            invis[0] = swap_x2;
+            invis[1] = swap_y2;
+        } else if (swap_x2 == invx && swap_y2 == invy) {
+            invis[0] = swap_x1;
+            invis[1] = swap_y1;
+        }
         order[swap_x1][swap_y1] = order[swap_x2][swap_y2];
         order[swap_x2][swap_y2] = arr_tmp;
         SDL_Rect temp = sliding_puzzle[swap_x1][swap_y1];
@@ -154,7 +165,7 @@ void shuffle_tiles (int order[][cols], int invis[]) {
 }
 
 int check_won (int tiles[][cols]) {
-    for (int i = 0; i < rows * cols; i++) {
+    for (int i=0; i<rows*cols; i++) {
         if (tiles[i/rows][i%cols] > tiles[i/rows][i%cols+1]) return 1;
     }
     return 0;
@@ -162,18 +173,10 @@ int check_won (int tiles[][cols]) {
 
 int main (int argc, char **argv) {
     srand(time(NULL));
-    int idxi, idxj;
+    int idxi=0, idxj=0;
     int invis[2] = {rand() % rows, rand() % cols};
     int count = 0;
-    int order[rows][cols];
     
-
-    for (int i=0; i<rows; i++) {
-        for (int j=0; j<cols; j++) {
-            order[i][j] = count++;
-        }
-    }
-
     if (argc < 2) {
         printf("You must specify a .png file\nex: %s dog.png\n", argv[0]);
         printf("You may also specify a difficulty: %s dog.png easy\n", argv[0]);
@@ -200,6 +203,13 @@ int main (int argc, char **argv) {
         } else { 
             printf("Invalid difficulty\n");
             return 1;
+        }
+    }
+
+    int order[rows][cols];
+    for (int i=0; i<rows; i++) {
+        for (int j=0; j<cols; j++) {
+            order[i][j] = count++;
         }
     }
     
