@@ -18,7 +18,7 @@ SDL_Rect sliding_puzzle[32][32];
 
 void update_window(int[], int);
 
-bool init(void) {
+bool init (void) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("Couldn't initialize SDL: %s\n", SDL_GetError());
         return false;
@@ -58,7 +58,7 @@ SDL_Surface *load_surface (char *path) {
     return optimized_surface;
 }
 
-bool load_media(char *argv) {
+bool load_media (char *argv) {
     image = load_surface(argv);
     if (image == NULL) {
         printf("Failed to load PNG image!\n");
@@ -66,6 +66,7 @@ bool load_media(char *argv) {
     }
     int cnk_w = image->w / cols;
     int cnk_h = image->h / rows;
+    
     SDL_SetWindowSize(window, image->w, image->h);
     for (int i=0; i<rows; i++) {
         for (int j=0; j<cols; j++) {
@@ -86,7 +87,7 @@ void apply_surface (int x, int y, SDL_Surface* source, SDL_Surface* destination,
     SDL_BlitSurface(source, sliding_puzzle, destination, &offset);
 }
 
-void clean_up(void) {
+void clean_up (void) {
     SDL_FreeSurface(image);
     SDL_DestroyWindow(window);
     image  = NULL;
@@ -125,9 +126,9 @@ void set_clicked_index (int clicked_x, int clicked_y, int *idx_i, int *idx_j, in
 
 void swap_tile (int i, int j, int *invis, int order[][cols]) {
     int arr_tmp = order[i][j];
+    
     order[i][j] = order[*(invis)][*(invis+1)];
     order[*(invis)][*(invis+1)] = arr_tmp;
-
     SDL_Rect temp = sliding_puzzle[i][j];
     sliding_puzzle[i][j] = sliding_puzzle[*(invis)][*(invis+1)];
     sliding_puzzle[*(invis)][*(invis+1)] = temp;
@@ -135,13 +136,14 @@ void swap_tile (int i, int j, int *invis, int order[][cols]) {
     *(invis + 1) = j;
 }
 
-void shuffle_tiles(int order[][cols], int invis[]) {
+void shuffle_tiles (int order[][cols], int invis[]) {
     for (int i=0; i<1000; i++) {
         int swap_x1 = rand()%rows;
         int swap_y1 = rand()%rows;
         int swap_x2 = rand()%rows;
         int swap_y2 = rand()%rows;
         int arr_tmp = order[swap_x1][swap_y1];
+        
         order[swap_x1][swap_y1] = order[swap_x2][swap_y2];
         order[swap_x2][swap_y2] = arr_tmp;
         SDL_Rect temp = sliding_puzzle[swap_x1][swap_y1];
