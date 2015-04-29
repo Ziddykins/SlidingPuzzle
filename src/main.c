@@ -66,7 +66,7 @@ bool load_media (char *argv) {
     }
     int cnk_w = image->w / cols;
     int cnk_h = image->h / rows;
-    SDL_SetWindowSize(window, image->w, image->h);
+    SDL_SetWindowSize(window, cnk_w * rows + rows, cnk_h * cols + cols);
     for (int i=0; i<rows; i++) {
         for (int j=0; j<cols; j++) {
             sliding_puzzle[i][j].w = cnk_w;
@@ -140,7 +140,7 @@ void shuffle_tiles (int order[][cols], int invis[]) {
     int invx = invis[0];
     int invy = invis[1];
 
-    for (int i=0; i<50; i++) {
+    for (int i=0; i<1000; i++) {
         int swap_x1 = rand()%rows;
         int swap_y1 = rand()%cols;
         int swap_x2 = rand()%rows;
