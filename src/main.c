@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
-#include <unistd.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -17,9 +16,9 @@ SDL_Surface *surface = NULL;
 SDL_Surface *image   = NULL;
 SDL_Rect sliding_puzzle[32][32];
 
-void update_window(int[], int);
+void update_window (int[], int);
 
-bool init(void) {
+bool init (void) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("Couldn't initialize SDL: %s\n", SDL_GetError());
         return false;
@@ -59,7 +58,7 @@ SDL_Surface *load_surface (char *path) {
     return optimized_surface;
 }
 
-bool load_media(char *argv) {
+bool load_media (char *argv) {
     image = load_surface(argv);
     if (image == NULL) {
         printf("Failed to load PNG image!\n");
@@ -87,7 +86,7 @@ void apply_surface (int x, int y, SDL_Surface* source, SDL_Surface* destination,
     SDL_BlitSurface(source, sliding_puzzle, destination, &offset);
 }
 
-void clean_up(void) {
+void clean_up (void) {
     SDL_FreeSurface(image);
     SDL_DestroyWindow(window);
     image  = NULL;
