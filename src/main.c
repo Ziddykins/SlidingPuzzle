@@ -7,8 +7,8 @@
 
 const int SCR_WIDTH  = 640;
 const int SCR_HEIGHT = 480;
-int rows       = 4;
-int cols       = 4;
+int rows             = 4;
+int cols             = 4;
 bool shuffled        = false;
 
 SDL_Window  *window  = NULL;
@@ -16,7 +16,6 @@ SDL_Surface *surface = NULL;
 SDL_Surface *image   = NULL;
 SDL_Rect sliding_puzzle[32][32];
 
-void apply_surface(int, int, SDL_Surface *, SDL_Surface *, SDL_Rect *);
 void update_window(int[], int);
 
 bool init(void) {
@@ -47,7 +46,6 @@ bool init(void) {
 SDL_Surface *load_surface (char *path) {
     SDL_Surface *optimized_surface = NULL;
     SDL_Surface *loaded_surface = IMG_Load(path);
-
     if (loaded_surface == NULL) {
         printf("Unable to load image %s: %s\n", path, IMG_GetError());
     } else {
@@ -57,7 +55,6 @@ SDL_Surface *load_surface (char *path) {
         }
         SDL_FreeSurface(loaded_surface);
     }
-
     return optimized_surface;
 }
 
@@ -92,10 +89,8 @@ void apply_surface (int x, int y, SDL_Surface* source, SDL_Surface* destination,
 void clean_up(void) {
     SDL_FreeSurface(image);
     SDL_DestroyWindow(window);
-
     image  = NULL;
     window = NULL;
-
     IMG_Quit();
     SDL_Quit();
 }
@@ -144,12 +139,16 @@ void shuffle_tiles(void) {
         int swap_y2 = rand()%rows;
         SDL_Rect temp = sliding_puzzle[swap_x1][swap_y1];
         sliding_puzzle[swap_x1][swap_y1] = sliding_puzzle[swap_x2][swap_y2];
-       sliding_puzzle[swap_x2][swap_y2] = temp;
+        sliding_puzzle[swap_x2][swap_y2] = temp;
     }
     shuffled = true;
 }
 
 int main (int argc, char **argv) {
+    srand(time(NULL));
+    int idxi, idxj;
+    int invis[2] = {rand() % rows, rand() % cols};
+
     if (argc < 2) {
         printf("You must specify a .png file\nex: %s dog.png\n", argv[0]);
         printf("You may also specify a difficulty: %s dog.png easy\n", argv[0]);
@@ -179,9 +178,6 @@ int main (int argc, char **argv) {
         }
     }
     
-    srand(time(NULL));
-    int idxi, idxj;
-    int invis[2] = {rand() % rows, rand() % cols};
     if (!init()) {
         printf("Could not initialize SDL: %s\n", SDL_GetError());
         return 1;
