@@ -100,8 +100,8 @@ void update_window (int invis[2], int init) {
     for (int i=0; i<rows; i++) {
         for (int j=0; j<cols; j++) {
             if (init && invis[0] == i && invis[1] == j) continue;
-            apply_surface(j * sliding_puzzle[i][j].w + j, i * sliding_puzzle[i][j].h + i,
-                          image, surface, &sliding_puzzle[i][j]);
+                apply_surface(j * sliding_puzzle[i][j].w + j, i * sliding_puzzle[i][j].h + i,
+                              image, surface, &sliding_puzzle[i][j]);
         }
     }
     surface = SDL_GetWindowSurface(window);
@@ -123,7 +123,11 @@ void set_clicked_index (int clicked_x, int clicked_y, int *idx_i, int *idx_j, in
     }
 }
 
-void swap_tile (int i, int j, int *invis) {
+void swap_tile (int i, int j, int *invis, int order[][cols]) {
+    int arr_tmp = order[i][j];
+    order[i][j] = order[*(invis)][*(invis+1)];
+    order[*(invis)][*(invis+1)] = arr_tmp;
+
     SDL_Rect temp = sliding_puzzle[i][j];
     sliding_puzzle[i][j] = sliding_puzzle[*(invis)][*(invis+1)];
     sliding_puzzle[*(invis)][*(invis+1)] = temp;
@@ -131,12 +135,15 @@ void swap_tile (int i, int j, int *invis) {
     *(invis + 1) = j;
 }
 
-void shuffle_tiles(void) {
+void shuffle_tiles(int order[][cols], int invis[]) {
     for (int i=0; i<1000; i++) {
         int swap_x1 = rand()%rows;
         int swap_y1 = rand()%rows;
         int swap_x2 = rand()%rows;
         int swap_y2 = rand()%rows;
+        int arr_tmp = order[swap_x1][swap_y1];
+        order[swap_x1][swap_y1] = order[swap_x2][swap_y2];
+        order[swap_x2][swap_y2] = arr_tmp;
         SDL_Rect temp = sliding_puzzle[swap_x1][swap_y1];
         sliding_puzzle[swap_x1][swap_y1] = sliding_puzzle[swap_x2][swap_y2];
         sliding_puzzle[swap_x2][swap_y2] = temp;
@@ -144,10 +151,26 @@ void shuffle_tiles(void) {
     shuffled = true;
 }
 
+int check_won (int tiles[][cols]) {
+    for (int i = 0; i < rows * cols; i++) {
+        if (tiles[i/rows][i%cols] > tiles[i/rows][i%cols+1]) return 1;
+    }
+    return 0;
+}
+
 int main (int argc, char **argv) {
     srand(time(NULL));
     int idxi, idxj;
     int invis[2] = {rand() % rows, rand() % cols};
+    int count = 0;
+    int order[rows][cols];
+    
+
+    for (int i=0; i<rows; i++) {
+        for (int j=0; j<cols; j++) {
+            order[i][j] = count++;
+        }
+    }
 
     if (argc < 2) {
         printf("You must specify a .png file\nex: %s dog.png\n", argv[0]);
@@ -189,6 +212,9 @@ int main (int argc, char **argv) {
             bool quit = false;
             SDL_Event e;
             update_window(NULL,0);
+            SDL_Delay(3000);
+            if (!shuffled) shuffle_tiles(order, invis);
+            update_window(NULL,0);
             while (!quit) {
                 while (SDL_PollEvent(&e) != 0) {
                     switch (e.type) {
@@ -196,13 +222,18 @@ int main (int argc, char **argv) {
                            quit = true;
                            break;
                        case SDL_MOUSEBUTTONDOWN:
-                           if (!shuffled) shuffle_tiles();
                            set_clicked_index(e.button.x, e.button.y, &idxi, &idxj, invis);
-                           if      (idxi-1 == invis[0] && idxj == invis[1]) swap_tile(idxi, idxj, invis);
-                           else if (idxi+1 == invis[0] && idxj == invis[1]) swap_tile(idxi, idxj, invis);
-                           else if (idxi == invis[0] && idxj-1 == invis[1]) swap_tile(idxi, idxj, invis);
-                           else if (idxi == invis[0] && idxj+1 == invis[1]) swap_tile(idxi, idxj, invis);
+                           if      (idxi-1 == invis[0] && idxj == invis[1]) swap_tile(idxi, idxj, invis, order);
+                           else if (idxi+1 == invis[0] && idxj == invis[1]) swap_tile(idxi, idxj, invis, order);
+                           else if (idxi == invis[0] && idxj-1 == invis[1]) swap_tile(idxi, idxj, invis, order);
+                           else if (idxi == invis[0] && idxj+1 == invis[1]) swap_tile(idxi, idxj, invis, order);
                            update_window(invis, 1);
+                           if (!check_won(order)) {
+                                printf("You've solved the puzzle!\n");
+                                SDL_Delay(3000);
+                                clean_up();
+                                return 0;
+                           }
                            break;
                     }
                 }
